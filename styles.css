@@ -275,7 +275,8 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
   flex-wrap: wrap;
   margin-top: 1rem;
 }
-.game-bar p { margin: 0; min-height: 1.6em; }
+.game-bar p { margin: 0; min-height: 1.6em; flex: 1 1 16rem; }
+.game-actions { display: flex; gap: .6rem; }
 .game-bar button { font: inherit; font-weight: 600; cursor: pointer; }
 .dpad { display: none; }
 @media (hover: none) and (pointer: coarse) {

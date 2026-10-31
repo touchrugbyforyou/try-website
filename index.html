@@ -111,12 +111,13 @@
   <dialog id="game-dialog" class="game-dialog" aria-labelledby="game-title">
     <button type="button" class="game-close" data-close-game aria-label="Close game">&times;</button>
     <h2 id="game-title">Can you score a try?</h2>
-        <p class="game-intro">Run past the defence and over the try line. Move with W A S D (or the arrows on a phone). Every try brings more defenders: middles first, then links, then wings.</p>
+        <p class="game-intro">Pick your spot and dump the ball with Space. The defence has to set 7 metres back. Then you’re the half: scoop it, beat the defence to the try line, and pass to a teammate to score. Move with W A S D. Every try brings more defenders: middles, then links, then wings.</p>
         <div class="game">
-          <canvas id="try-game" width="700" height="500" tabindex="0" aria-label="Touch rugby game. Use W A S D to move your player past the defenders to the try line on the right."></canvas>
+          <canvas id="try-game" width="700" height="500" tabindex="0" aria-label="Touch rugby scoop game. Use W A S D to move, Space to dump the ball, then scoop it with the half and reach the try line on the right."></canvas>
           <div class="game-bar">
             <p id="try-game-status" role="status">Level 1 of 4: One middle.</p>
-            <button id="try-game-start" class="btn btn-primary" type="button">Start</button>
+            <span class="game-actions"><button id="try-game-dump" class="btn btn-ghost" type="button" hidden>Dump the ball</button>
+            <button id="try-game-start" class="btn btn-primary" type="button">Start</button></span>
           </div>
           <div class="dpad" aria-hidden="true">
             <button type="button" data-dir="up" tabindex="-1">&#9650;</button>
