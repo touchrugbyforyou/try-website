@@ -536,8 +536,12 @@
     }
   }
 
+  // Overall game speed. Everything (players, defence, ball, timers) scales together,
+  // so slowing it down doesn't change the difficulty balance.
+  const GAME_SPEED = 0.75;
+
   function loop(t) {
-    const dt = Math.min((t - lastT) / 1000 || 0, 0.05);
+    const dt = Math.min((t - lastT) / 1000 || 0, 0.05) * GAME_SPEED;
     lastT = t;
     if (playing && s) {
       step(s, dt, keys);
