@@ -271,6 +271,7 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
 }
 .game-rules li { margin-bottom: .3rem; }
 .game-controls { max-width: 40rem; margin: 0 0 1.25rem; font-size: 1rem; color: #E6EADF; }
+.game-tally { margin: -.75rem 0 1.25rem; font-size: 1rem; font-weight: 600; color: var(--bib); }
 @media (hover: none) and (pointer: coarse) {
   .game-controls, .desk-only { display: none !important; }
 }
@@ -278,7 +279,7 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
 .game-stage { position: relative; }
 #try-game {
   display: block;
-  width: min(100%, calc((100vh - 30rem) * 1.4));   /* keep the whole dialog on screen */
+  width: min(100%, calc((100vh - 31.5rem) * 1.4));   /* keep the whole dialog on screen */
   height: auto;
   margin-inline: auto;
   border-radius: 6px;
@@ -357,7 +358,8 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
 .game-dialog.is-full h2,
 .game-dialog.is-full .game-intro,
 .game-dialog.is-full .game-rules,
-.game-dialog.is-full .game-controls { display: none; }
+.game-dialog.is-full .game-controls,
+.game-dialog.is-full .game-tally { display: none; }
 .game-dialog.is-full .game {
   max-width: none;
   flex: 1;

@@ -367,6 +367,7 @@
   const dialog = document.getElementById('game-dialog');
   const passTouch = document.getElementById('try-pass-touch');
   const passBtn = document.getElementById('try-game-pass');
+  const tallyEl = document.getElementById('try-game-tally');
   const fullBtn = document.getElementById('try-game-full');
   const stick = document.getElementById('try-stick');
   const knob = stick.querySelector('.stick-knob');
@@ -389,6 +390,22 @@
   const hasKeyboard = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   const spaceTo = (what) => (hasKeyboard ? ` Press Space to ${what}.` : '');
   const clearKeys = () => { for (const k in keys) keys[k] = typeof keys[k] === 'number' ? 0 : false; resetStick(); };
+
+  // Worldwide tally of tries scored, kept by Abacus (a free counting service). If it can't be
+  // reached, the line simply stays hidden and the game carries on.
+  const TALLY_URL = 'https://abacus.jasoncameron.dev';
+  const TALLY_KEY = 'touchrugbyforyou/tries-scored';
+  async function tally(op) {
+    if (testLevel) return;                      // don't count test runs
+    try {
+      const res = await fetch(`${TALLY_URL}/${op}/${TALLY_KEY}`);
+      if (!res.ok) return;
+      const n = (await res.json()).value;
+      if (typeof n !== 'number' || !isFinite(n)) return;
+      tallyEl.textContent = `${n.toLocaleString()} ${n === 1 ? 'try' : 'tries'} scored by players so far`;
+      tallyEl.hidden = false;
+    } catch (err) { /* offline or blocked: leave the tally hidden */ }
+  }
 
   function start() {
     s = create(level);
@@ -414,6 +431,7 @@
     }
     if (p === 'scored') {
       playing = false; tries++;
+      tally('hit');
       if (level === LEVELS.length - 1) {
         say(`Try! You beat the full six. ${tries} tries scored.${spaceTo('play again')}`);
         startBtn.textContent = 'Play again'; level = 0;
@@ -633,7 +651,7 @@
 
   // Pop-up: opened from the "play a mini-game while you wait" buttons.
   document.querySelectorAll('[data-open-game]').forEach((b) =>
-    b.addEventListener('click', () => { dialog.showModal(); startBtn.focus(); }));
+    b.addEventListener('click', () => { dialog.showModal(); startBtn.focus(); tally('get'); }));
   document.querySelectorAll('[data-close-game]').forEach((b) =>
     b.addEventListener('click', () => dialog.close()));
   dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
