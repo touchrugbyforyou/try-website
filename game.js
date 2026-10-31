@@ -25,7 +25,6 @@
 
   // Defenders start on their try line: middles centre, links outside, wings outside links.
   const LEVELS = [
-    { name: 'One middle', team: [['M', 0]] },
     { name: 'Two middles', team: [['M', -40], ['M', 40]] },
     { name: 'Middles and links', team: [['L', -115], ['M', -40], ['M', 40], ['L', 115]] },
     { name: 'The full six', team: [['W', -195], ['L', -120], ['M', -45], ['M', 45], ['L', 120], ['W', 195]] }
@@ -46,8 +45,10 @@
     lineInc: 9,
     lateral: 45,       // how fast the line shuffles sideways
     chase: 115,        // the defender who breaks off to make the touch
-    chaseInc: 6,       // extra chase speed per level
-    engage: 75,        // how close before someone breaks off
+    chaseInc: 3,       // extra chase speed per level
+    mark: 45,          // how fast a defender shifts sideways to stay on their attacker
+    corner: 0.5,       // corner: sideways drift per metre retreated
+    engage: 110,       // how close before the defender on the ball steps up to touch
     gap: 60,           // line tries to keep 6 m off the ball
     slide: 0.15,       // how much the line slides toward the ball
     margin: 85,        // line holds this far in from the sidelines
@@ -85,7 +86,7 @@
   }
 
   // A touch: the carrier dumps the ball where they were touched. The 6th touch is a changeover.
-  function dump(s, carrier) {
+  function dump(s, carrier, toucher) {
     const d = carrier || s.dumper;
     s.touches++;
     if (s.touches >= 6) { s.phase = 'touched'; s.reason = 'six'; return true; }
@@ -97,6 +98,7 @@
     // Defence must retreat from the mark; near their line that means back to their try line.
     s.onsideX = Math.min(d.x + C.RETREAT, C.TRY_X);
     for (const def of s.defenders) def.onside = def.x >= s.onsideX - 1;
+    cornerAndShut(s, toucher);
     // New half: the closest teammate who isn't ahead of the ball.
     let best = Infinity;
     for (const a of s.attackers) {
@@ -142,27 +144,75 @@
     separate(team);
   }
 
-  function defend(s, dt) {
-    const T = s.T, b = s.ball;
-    const lineSpeed = T.line0 + s.level * T.lineInc;
-    const lineX = clamp(b.x + T.gap, C.L + 60, C.TRY_X);
-    const slide = (b.y - C.MID) * T.slide;
-    const carrier = b.holder;
-    let chaser = null, best = Infinity;
-    if (carrier) for (const d of s.defenders) {
-      if (!d.onside) continue;
-      const dd = dist(d, carrier); if (dd < best) { best = dd; chaser = d; }
-    }
-    for (const d of s.defenders) {
-      if (!d.onside) retreat(s, d, dt);
-      else if (d === chaser && best < T.engage) moveToward(d, carrier.x, carrier.y, (T.chase + s.level * T.chaseInc) * dt);
-      else moveLine(d, lineX, clamp(d.homeY + slide, C.T + T.margin, C.B - T.margin), lineSpeed * dt, T.lateral * dt);
-    }
+  // Corner/Shut (England Touch defence policy), set up the moment a touch is made.
+  // The line splits into two halves by side of the field (with six: the three on each side).
+  //  Corner: the half on the toucher's side retreats diagonally toward that side's corner,
+  //          protecting the outside ("never give the outside").
+  //  Shut:   the other half slides in, each defender taking the spot of the teammate inside
+  //          them, which leaves the far attacker free and forces a long pass.
+  function cornerAndShut(s, toucher) {
+    const ds = s.defenders.slice().sort((p, q) => p.y - q.y);
+    const t = toucher && ds.includes(toucher) ? toucher : ds[0];
+    const half = Math.ceil(ds.length / 2);
+    const topGroup = ds.slice(0, half);
+    const touchTop = topGroup.includes(t);
+    const cornerDir = touchTop ? -1 : 1;                   // toward the sideline on the touch side
+    const lo = C.T + C.R + 8, hi = C.B - C.R - 8;
+    const startY = ds.map((d) => d.y);
+    ds.forEach((d, k) => {
+      const inTouchHalf = touchTop ? k < half : k >= half;
+      if (inTouchHalf) {
+        const back = Math.max(0, s.onsideX - d.x);
+        d.retreatY = clamp(d.y + cornerDir * back * s.T.corner, lo, hi);   // corner
+        d.call = 'Corner';
+      } else {
+        d.retreatY = clamp(startY[k + cornerDir], lo, hi);  // shut onto the inside spot
+        d.call = 'Shut';
+      }
+    });
   }
 
-  // Back to the onside line; a defender only counts once they're there.
+  // Once play is on: each defender who's back onside marks an attacker. The defence covers the
+  // attackers nearest the ball, short side first, so the far long side is the one left free.
+  // Whoever is marking the ball carrier steps up to make the touch.
+  function defend(s, dt) {
+    const T = s.T, b = s.ball;
+    for (const d of s.defenders) if (!d.onside) retreat(s, d, dt);
+    const live = s.defenders.filter((d) => d.onside).sort((p, q) => p.y - q.y);
+    if (!live.length) return;
+    const A = s.attackers.slice().sort((p, q) => p.y - q.y);
+    let focus = b.holder || s.flight;
+    if (!focus) { let best = Infinity; for (const a of A) { const dd = dist(a, b); if (dd < best) { best = dd; focus = a; } } }
+    const bi = A.indexOf(focus), n = Math.min(live.length, A.length);
+    const shortTop = bi < (A.length - 1) / 2;
+    let start = 0, bestCost = Infinity;
+    for (let st = Math.max(0, bi - n + 1); st <= Math.min(bi, A.length - n); st++) {
+      let cost = 0;
+      for (let j = st; j < st + n; j++) cost += Math.abs(j - bi);
+      cost -= 0.01 * (shortTop ? bi - st : st + n - 1 - bi);   // tie: cover the short side
+      if (cost < bestCost) { bestCost = cost; start = st; }
+    }
+    const marks = A.slice(start, start + n);
+    // The ball (carrier, receiver, or the ball on the ground) gets the nearest defender: that's
+    // the shut defender taking the inside man. Everyone else marks in order across the field.
+    let ballMan = live[0], bestD = Infinity;
+    const target = focus || b;
+    for (const d of live) { const dd = dist(d, target); if (dd < bestD) { bestD = dd; ballMan = d; } }
+    const others = live.filter((d) => d !== ballMan);
+    const otherMarks = marks.filter((a) => a !== focus);
+    const lineSpeed = T.line0 + s.level * T.lineInc;
+    const chase = T.chase + s.level * T.chaseInc;
+    const carrier = b.holder;
+    const markUp = (d, a) => moveLine(d, clamp(a.x + T.gap, C.L + 60, C.TRY_X), clamp(a.y, C.T + C.R, C.B - C.R), lineSpeed * dt, T.mark * dt);
+    if (carrier && dist(ballMan, carrier) < T.engage) moveToward(ballMan, carrier.x, carrier.y, chase * dt);
+    else markUp(ballMan, focus);
+    others.forEach((d, k) => { if (otherMarks[k]) markUp(d, otherMarks[k]); });
+  }
+
+  // Back to the onside line along the corner or shut path; a defender only counts once there.
   function retreat(s, d, dt) {
-    moveLine(d, s.onsideX, d.y, s.T.setSpeed * dt, 0);
+    const ty = d.retreatY == null ? d.y : d.retreatY;
+    moveLine(d, s.onsideX, ty, s.T.setSpeed * dt, s.T.setSpeed * s.T.corner * dt);
     if (d.x >= s.onsideX - 1) d.onside = true;
   }
 
@@ -178,7 +228,7 @@
       moveLine(d, tx, clamp(d.homeY + slide, C.T + T.margin, C.B - T.margin), T.lineUp * dt, T.lateral * dt);
     }
     separate(s.defenders);
-    if (best < C.R * 2) dump(s);
+    if (best < C.R * 2) dump(s, s.dumper, s.marker);
   }
 
   function separate(list) {
@@ -247,7 +297,7 @@
       if (s.released) defend(s, dt);
       else for (const d of s.defenders) {
         if (!d.onside) retreat(s, d, dt);
-        else moveLine(d, s.onsideX, clamp(d.homeY, C.T + T.margin, C.B - T.margin), T.setSpeed * dt, T.lateral * dt);
+        else moveLine(d, s.onsideX, d.retreatY == null ? d.y : d.retreatY, T.setSpeed * dt, T.mark * dt);
       }
       separate(s.defenders);
       if (dist(s.half, s.ball) < C.R + 4) {     // half touches the ball: play is on
@@ -272,7 +322,7 @@
       for (const d of s.defenders) {
         if (d.onside && dist(d, c) < C.R * 2) {
           if (c === s.half && s.halfRule) { s.phase = 'touched'; s.reason = 'half'; }
-          else dump(s, c);                       // touch counted: dump it and go again
+          else dump(s, c, d);                    // touch counted: dump it and go again
           return;
         }
       }
@@ -429,6 +479,17 @@
     for (const d of s.defenders) {
       ctx.globalAlpha = d.onside ? 1 : 0.45;               // still retreating: can't make a touch yet
       dot(d, COLORS.defender, d.role, COLORS.defenderText);
+      ctx.globalAlpha = 1;
+    }
+    // Name the defensive calls while the line resets after a touch.
+    if (s.phase === 'set' && s.t < 1.6) {
+      ctx.globalAlpha = Math.min(1, (1.6 - s.t) * 2);
+      ctx.font = '600 12px Barlow, Arial, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      for (const d of s.defenders) {
+        if (!d.call) continue;
+        ctx.fillStyle = d.call === 'Corner' ? COLORS.bib : COLORS.defender;
+        ctx.fillText(d.call, d.x + C.R + 5, d.y + 1);
+      }
       ctx.globalAlpha = 1;
     }
     for (const a of s.attackers) dot(a, COLORS.bib, a.role, COLORS.ink);
