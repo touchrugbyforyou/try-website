@@ -4,13 +4,14 @@
 //   1. Carry: you run the ball carrier (M) at the defence. Their line comes up
 //      staggered, with one marker out in front to make the touch. Wherever
 //      you're touched is where you dump the ball (the rollball).
-//   2. Set:   every defender must retreat to the onside line 7 m back from the
+//   2. Set:   every defender must retreat to the onside line ("7 m", really 10 m) back from the
 //      mark before they can play. Control switches to your half (the scooper).
 //   3. Run:   the half scoops the ball. Defenders still retreating can't touch
 //      until they're back onside, so a quick scoop is an advantage. If the half
 //      is touched holding the ball, it's a changeover.
-//   4. Pass:  the half can't score, so on reaching the try line they pass to
-//      the nearest teammate, who grounds it for the try.
+//   4. Pass:  press Space to pass to the best-placed teammate (never forward).
+//      The half can't score, so if they reach the line they pop it to a
+//      teammate. Anyone else who gets the ball can run it in themselves.
 (function () {
   'use strict';
 
@@ -18,7 +19,8 @@
   // 10 px = 1 m. Field is 70 m long (try line to try line is 56 m) by 50 m wide.
   const C = {
     W: 700, H: 500, L: 20, RT: 680, T: 20, B: 480,
-    TRY_X: 630, OWN_X: 70, MID: 250, R: 12, SEVEN: 70
+    TRY_X: 630, OWN_X: 70, MID: 250, R: 12, SEVEN: 70,
+    RETREAT: 100   // defenders actually retreat 10 m for a friendlier game; shown to players as 7 m (the FIT rule)
   };
 
   // Defenders start on their try line: middles centre, links outside, wings outside links.
@@ -69,7 +71,8 @@
     const T = Object.assign({}, TUNE, tune || {});
     const s = {
       level, T, phase: 'carry', t: 0, mark: null, onsideX: null,
-      released: false, slowRelease: false, receiver: null, marker: null
+      released: false, slowRelease: false, receiver: null, marker: null,
+      flight: null, halfRule: true, passes: 0, touches: 0, reason: null
     };
     s.attackers = ATTACK.map(([role, lane]) => ({ role, lane, x: C.OWN_X + 40, y: C.MID + lane }));
     s.dumper = s.attackers[DUMPER];
@@ -81,15 +84,27 @@
     return s;
   }
 
-  function dump(s) {
-    if (s.phase !== 'carry') return false;
-    const d = s.dumper;
+  // A touch: the carrier dumps the ball where they were touched. The 6th touch is a changeover.
+  function dump(s, carrier) {
+    const d = carrier || s.dumper;
+    s.touches++;
+    if (s.touches >= 6) { s.phase = 'touched'; s.reason = 'six'; return true; }
+    s.dumper = d;
     s.mark = { x: d.x, y: d.y };
+    s.flight = null;
     s.ball.holder = null;
     s.ball.x = d.x; s.ball.y = d.y;
-    // Defence must retreat 7 m from the mark; inside their 7 m zone that means their try line.
-    s.onsideX = Math.min(d.x + C.SEVEN, C.TRY_X);
+    // Defence must retreat from the mark; near their line that means back to their try line.
+    s.onsideX = Math.min(d.x + C.RETREAT, C.TRY_X);
     for (const def of s.defenders) def.onside = def.x >= s.onsideX - 1;
+    // New half: the closest teammate who isn't ahead of the ball.
+    let best = Infinity;
+    for (const a of s.attackers) {
+      if (a === d) continue;
+      const dd = dist(a, s.mark) + (a.x > s.mark.x + 10 ? 1000 : 0);
+      if (dd < best) { best = dd; s.half = a; }
+    }
+    s.halfRule = true; s.released = false; s.slowRelease = false;
     s.phase = 'set'; s.t = 0;
     s.controlled = s.half;
     return true;
@@ -100,6 +115,10 @@
     let vx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
     let vy = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
     if (vx && vy) { vx *= Math.SQRT1_2; vy *= Math.SQRT1_2; }
+    if (keys.ax || keys.ay) {                   // joystick: analog direction
+      const m = Math.hypot(keys.ax, keys.ay);
+      vx = m > 1 ? keys.ax / m : keys.ax; vy = m > 1 ? keys.ay / m : keys.ay;
+    }
     p.x = clamp(p.x + vx * s.T.speed * dt, C.L + C.R, C.RT - C.R);
     p.y = clamp(p.y + vy * s.T.speed * dt, C.T + C.R, C.B - C.R);
     if (s.phase === 'carry') p.x = Math.min(p.x, C.TRY_X - C.SEVEN);   // the touch comes before their 7 m line
@@ -177,6 +196,37 @@
     }
   }
 
+  // Who's the best option? Only teammates level with or behind the ball (no forward passes),
+  // within passing range. Prefer someone with space around them and a clear run to the line.
+  function bestReceiver(s, atLine) {
+    const c = s.controlled, live = s.defenders.filter((d) => d.onside);
+    let best = null, bestScore = -Infinity;
+    for (const a of s.attackers) {
+      if (a === c) continue;
+      const range = dist(a, c);
+      if (!atLine && (a.x > c.x + 4 || range > 230 || range < 20)) continue;
+      let space = 220, lane = 160;
+      for (const d of live) {
+        space = Math.min(space, dist(d, a));
+        if (d.x > a.x - C.R) lane = Math.min(lane, Math.abs(d.y - a.y));
+      }
+      const score = atLine ? -range : space + 0.8 * lane - 0.35 * range;
+      if (score > bestScore) { bestScore = score; best = a; }
+    }
+    return best;
+  }
+
+  function pass(s) {
+    if (s.phase !== 'run' || s.flight) return false;
+    const r = bestReceiver(s, false);
+    if (!r) return false;
+    s.ball.holder = null; s.flight = r;
+    s.controlled = r;                           // you take over the receiver straight away
+    s.halfRule = false;                         // once the half passes, anyone can score
+    s.passes++;
+    return true;
+  }
+
   function step(s, dt, keys) {
     const T = s.T;
     if (s.phase === 'touched' || s.phase === 'scored') return;
@@ -207,21 +257,32 @@
     }
 
     if (s.phase === 'run') {
-      s.ball.x = s.half.x + 9; s.ball.y = s.half.y;
-      support(s, dt, s.half);
+      const c = s.controlled;
+      if (s.flight) {                           // ball in the air: it homes in on the receiver
+        const r = s.flight;
+        moveToward(s.ball, r.x + 9, r.y, T.pass * dt);
+        if (Math.hypot(s.ball.x - r.x - 9, s.ball.y - r.y) < 1) { s.ball.holder = r; s.flight = null; }
+      } else {
+        s.ball.x = c.x + 9; s.ball.y = c.y;
+      }
+      support(s, dt, c);
       defend(s, dt);
       separate(s.defenders);
+      if (s.flight) return;
       for (const d of s.defenders) {
-        if (d.onside && dist(d, s.half) < C.R * 2) { s.phase = 'touched'; return; }
-      }
-      if (s.half.x >= C.TRY_X - C.R) {          // half reaches the line: pass to the nearest teammate
-        let best = Infinity;
-        for (const a of s.attackers) {
-          if (a === s.half) continue;
-          const dd = dist(a, s.half);
-          if (dd < best) { best = dd; s.receiver = a; }
+        if (d.onside && dist(d, c) < C.R * 2) {
+          if (c === s.half && s.halfRule) { s.phase = 'touched'; s.reason = 'half'; }
+          else dump(s, c);                       // touch counted: dump it and go again
+          return;
         }
-        s.ball.holder = null; s.phase = 'passing'; s.t = 0;
+      }
+      if (c.x >= C.TRY_X - C.R) {
+        if (c === s.half && s.halfRule) {       // the half can't score: pop it to the best teammate
+          s.receiver = bestReceiver(s, true);
+          s.ball.holder = null; s.phase = 'passing'; s.t = 0;
+        } else {
+          s.receiver = c; s.phase = 'grounding'; s.t = 0;
+        }
       }
       return;
     }
@@ -241,7 +302,7 @@
     }
   }
 
-  const Engine = { C, LEVELS, TUNE, create, dump, step };
+  const Engine = { C, LEVELS, TUNE, create, dump, pass, bestReceiver, step };
   if (typeof module !== 'undefined' && module.exports) module.exports = Engine;
   if (typeof document === 'undefined') return;
 
@@ -252,6 +313,10 @@
   const statusEl = document.getElementById('try-game-status');
   const startBtn = document.getElementById('try-game-start');
   const dialog = document.getElementById('game-dialog');
+  const passTouch = document.getElementById('try-pass-touch');
+  const fullBtn = document.getElementById('try-game-full');
+  const stick = document.getElementById('try-stick');
+  const knob = stick.querySelector('.stick-knob');
 
   const COLORS = {
     pitchA: '#174a32', pitchB: '#123F2A', chalk: 'rgba(245,246,239,.75)',
@@ -260,7 +325,7 @@
   };
 
   let level = 0, tries = 0, playing = false, s = null, lastPhase = null, lastSlow = false, lastT = 0;
-  const keys = { up: false, down: false, left: false, right: false };
+  const keys = { up: false, down: false, left: false, right: false, ax: 0, ay: 0 };
 
   const testLevel = Number(new URLSearchParams(location.search).get('level'));
   if (testLevel >= 1 && testLevel <= LEVELS.length) level = testLevel - 1;
@@ -268,7 +333,7 @@
 
   const say = (text) => { statusEl.textContent = text; };
   const levelLabel = () => `Level ${level + 1} of ${LEVELS.length}: ${LEVELS[level].name}.`;
-  const clearKeys = () => { for (const k in keys) keys[k] = false; };
+  const clearKeys = () => { for (const k in keys) keys[k] = typeof keys[k] === 'number' ? 0 : false; resetStick(); };
 
   function start() {
     s = create(level);
@@ -279,12 +344,16 @@
 
   function onPhase(p) {
     if (p === 'carry') say(`${levelLabel()} Run it up. Wherever their marker touches you is where you dump the ball.`);
-    if (p === 'set') say('Touch! Ball dumped. The defence must retreat 7 m. You’re the half: scoop it quickly!');
-    if (p === 'run') say('Scooped! Get the half to the try line.');
+    if (p === 'set') say(s.touches >= 5
+      ? 'Touch 5! Last chance: scoop it and score before the sixth touch.'
+      : `Touch ${s.touches}! Ball dumped and the defence must retreat 7 m. You’re the half: scoop it quickly!`);
+    if (p === 'run') say('Scooped! Run for the line, or press Space to pass to the open teammate (circled).');
     if (p === 'passing') say('At the line! The half can’t score, so you pass to your nearest teammate…');
     if (p === 'touched') {
       playing = false;
-      say(`Touched! The half was caught with the ball, so it’s a changeover. ${levelLabel()}`);
+      say(s.reason === 'six'
+        ? `That’s the sixth touch, so it’s a changeover. ${levelLabel()}`
+        : `Touched! The half was caught with the ball, so it’s a changeover. ${levelLabel()}`);
       startBtn.textContent = 'Try again'; startBtn.hidden = false;
     }
     if (p === 'scored') {
@@ -362,6 +431,16 @@
     }
     for (const a of s.attackers) dot(a, COLORS.bib, a.role, COLORS.ink);
 
+    // Circle the teammate a pass would go to.
+    if (playing && s.phase === 'run' && !s.flight) {
+      const r = bestReceiver(s, false);
+      if (r) {
+        ctx.setLineDash([4, 4]); ctx.strokeStyle = COLORS.defender; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(r.x, r.y, C.R + 5, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
     // Highlight the player you're controlling.
     if (playing && s.controlled) {
       const p = s.controlled;
@@ -372,6 +451,14 @@
       ctx.lineTo(p.x, p.y - C.R - 7); ctx.closePath(); ctx.fill();
     }
     ball(s.ball);
+
+    if (playing || s.touches) {                       // touch counter
+      ctx.fillStyle = 'rgba(22,32,26,.65)';
+      ctx.fillRect(C.L + 8, C.B - 30, 92, 22);
+      ctx.fillStyle = COLORS.defender; ctx.font = '600 13px Barlow, Arial, sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(`Touch ${Math.min(s.touches, 6)} of 6`, C.L + 16, C.B - 19);
+    }
   }
 
   function loop(t) {
@@ -394,6 +481,11 @@
   function onKey(e, down) {
     if (!playing || !dialog.open) return;
     const key = e.key.toLowerCase();
+    if (key === ' ') {
+      if (down && !e.repeat) doPass();
+      e.preventDefault();
+      return;
+    }
     const k = KEYMAP[key];
     if (!k) return;
     keys[k] = down;
@@ -403,15 +495,53 @@
   window.addEventListener('keyup', (e) => onKey(e, false));
   window.addEventListener('blur', clearKeys);
 
-  document.querySelectorAll('[data-dir]').forEach((btn) => {
-    const dir = btn.dataset.dir;
-    const on = (e) => { e.preventDefault(); keys[dir] = true; };
-    const off = () => { keys[dir] = false; };
-    btn.addEventListener('pointerdown', on);
-    btn.addEventListener('pointerup', off);
-    btn.addEventListener('pointerleave', off);
-    btn.addEventListener('pointercancel', off);
+  // Joystick: drag anywhere in the circle; distance from the centre sets speed.
+  const STICK_R = 46;
+  let stickId = null;
+  function resetStick() {
+    stickId = null; keys.ax = 0; keys.ay = 0;
+    if (knob) knob.style.transform = '';
+  }
+  function moveStick(e) {
+    const r = stick.getBoundingClientRect();
+    let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+    const m = Math.hypot(dx, dy);
+    if (m > STICK_R) { dx = dx / m * STICK_R; dy = dy / m * STICK_R; }
+    knob.style.transform = `translate(${dx}px, ${dy}px)`;
+    const ax = dx / STICK_R, ay = dy / STICK_R;
+    const dead = Math.hypot(ax, ay) < 0.15;
+    keys.ax = dead ? 0 : ax; keys.ay = dead ? 0 : ay;
+  }
+  stick.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); stickId = e.pointerId; stick.setPointerCapture(e.pointerId); moveStick(e);
   });
+  stick.addEventListener('pointermove', (e) => { if (e.pointerId === stickId) moveStick(e); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) =>
+    stick.addEventListener(t, (e) => { if (e.pointerId === stickId) resetStick(); }));
+  passTouch.addEventListener('pointerdown', (e) => { e.preventDefault(); doPass(); });
+
+  // Full screen: real full screen where the browser allows it, plus a layout that fills the window.
+  function setFull(on) {
+    dialog.classList.toggle('is-full', on);
+    fullBtn.textContent = on ? 'Exit full screen' : 'Full screen';
+  }
+  fullBtn.addEventListener('click', async () => {
+    const on = !dialog.classList.contains('is-full');
+    setFull(on);
+    try {
+      if (on && dialog.requestFullscreen) {
+        await dialog.requestFullscreen();
+        if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape').catch(() => {});
+      } else if (!on && document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+    } catch (err) { /* not allowed here (e.g. iPhone): the full-window layout still applies */ }
+  });
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && dialog.classList.contains('is-full')) setFull(false);
+  });
+
+  function doPass() { if (playing && s) pass(s); }
   startBtn.addEventListener('click', () => { clearKeys(); start(); });
 
   // Pop-up: opened from the "play a mini-game while you wait" buttons.
@@ -422,6 +552,8 @@
   dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
   dialog.addEventListener('close', () => {
     clearKeys();
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    setFull(false);
     if (playing) {
       playing = false; s = create(level);
       startBtn.hidden = false; startBtn.textContent = 'Start';

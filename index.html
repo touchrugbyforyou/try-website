@@ -111,18 +111,22 @@
   <dialog id="game-dialog" class="game-dialog" aria-labelledby="game-title">
     <button type="button" class="game-close" data-close-game aria-label="Close game">&times;</button>
     <h2 id="game-title">Can you score a try?</h2>
-        <p class="game-intro">Run the ball up with W A S D. Wherever a defender touches you is where you dump the ball, and the defence has to retreat 7 metres. Then you’re the half: scoop it fast, beat them to the try line, and pass to a teammate to score. Every try brings more defenders: middles, then links, then wings.</p>
+        <p class="game-intro">Run the ball up with W A S D (or the joystick on a phone). Wherever a defender touches you, you dump the ball and the defence has to retreat 7 metres. Then you’re the half: scoop it fast and run for the line. Press Space to pass to your best-placed teammate (never forward). The half can’t score, and if the half is touched with the ball it’s a changeover. Anyone else who’s touched dumps it again, but you only get six touches. Every try brings more defenders: middles, then links, then wings.</p>
         <div class="game">
-          <canvas id="try-game" width="700" height="500" tabindex="0" aria-label="Touch rugby scoop game. Use W A S D to run the ball up until you are touched, then scoop the ball with the half and reach the try line on the right."></canvas>
+          <p class="rotate-hint">Turn your phone sideways for a bigger pitch.</p>
+          <div class="game-stage">
+            <canvas id="try-game" width="700" height="500" tabindex="0" aria-label="Touch rugby scoop game. Use W A S D to run the ball up until you are touched, then scoop the ball with the half, press Space to pass, and reach the try line on the right."></canvas>
+            <div class="touch-controls" aria-hidden="true">
+              <div class="stick" id="try-stick"><div class="stick-knob"></div></div>
+              <button type="button" class="pass-touch" id="try-pass-touch" tabindex="-1">Pass</button>
+            </div>
+          </div>
           <div class="game-bar">
             <p id="try-game-status" role="status">Level 1 of 4: One middle.</p>
-            <span class="game-actions"><button id="try-game-start" class="btn btn-primary" type="button">Start</button></span>
-          </div>
-          <div class="dpad" aria-hidden="true">
-            <button type="button" data-dir="up" tabindex="-1">&#9650;</button>
-            <button type="button" data-dir="left" tabindex="-1">&#9664;</button>
-            <button type="button" data-dir="down" tabindex="-1">&#9660;</button>
-            <button type="button" data-dir="right" tabindex="-1">&#9654;</button>
+            <span class="game-actions">
+              <button id="try-game-full" class="btn btn-ghost" type="button">Full screen</button>
+              <button id="try-game-start" class="btn btn-primary" type="button">Start</button>
+            </span>
           </div>
         </div>
   </dialog>
