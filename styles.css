@@ -279,7 +279,7 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
 .game-stage { position: relative; }
 #try-game {
   display: block;
-  width: min(100%, calc((100vh - 31.5rem) * 1.4));   /* keep the whole dialog on screen */
+  width: min(100%, calc((100vh - 33rem) * 1.4));   /* keep the whole dialog on screen */
   height: auto;
   margin-inline: auto;
   border-radius: 6px;
