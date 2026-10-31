@@ -1,12 +1,14 @@
 // "Can you score a try?" — a small touch rugby scoop-play game for the TRY site.
 //
 // How a play works (based on FIT touch rules):
-//   1. Carry: you run the ball carrier (M) to the spot you want, then dump the
-//      ball (the rollball). You can dump anywhere up to the defence's 7 m line.
-//   2. Set:   the defence must set 7 m back from the mark, so their line moves
-//      up to that onside line. Control switches to your half (the scooper).
-//   3. Run:   once the half touches the ball, the defence is released. If the
-//      half is touched holding the ball, it's a changeover.
+//   1. Carry: you run the ball carrier (M) at the defence. Their line comes up
+//      staggered, with one marker out in front to make the touch. Wherever
+//      you're touched is where you dump the ball (the rollball).
+//   2. Set:   every defender must retreat to the onside line 7 m back from the
+//      mark before they can play. Control switches to your half (the scooper).
+//   3. Run:   the half scoops the ball. Defenders still retreating can't touch
+//      until they're back onside, so a quick scoop is an advantage. If the half
+//      is touched holding the ball, it's a changeover.
 //   4. Pass:  the half can't score, so on reaching the try line they pass to
 //      the nearest teammate, who grounds it for the try.
 (function () {
@@ -34,11 +36,15 @@
   const TUNE = {
     speed: 200,        // you, px/s
     support: 170,      // teammates
-    setSpeed: 110,     // defence moving up to the onside line
+    setSpeed: 110,     // defence moving to the onside line, and retreating to it
+    markSpeed: 165,    // the marker rushing up to make the touch
+    lineUp: 135,       // the rest of the line coming up behind the marker
+    stagger: 35,       // how far the line sits behind the marker
     line0: 70,         // defensive line speed after release, + lineInc per level
-    lineInc: 6,
+    lineInc: 9,
     lateral: 45,       // how fast the line shuffles sideways
     chase: 115,        // the defender who breaks off to make the touch
+    chaseInc: 6,       // extra chase speed per level
     engage: 75,        // how close before someone breaks off
     gap: 60,           // line tries to keep 6 m off the ball
     slide: 0.15,       // how much the line slides toward the ball
@@ -63,7 +69,7 @@
     const T = Object.assign({}, TUNE, tune || {});
     const s = {
       level, T, phase: 'carry', t: 0, mark: null, onsideX: null,
-      released: false, slowRelease: false, receiver: null
+      released: false, slowRelease: false, receiver: null, marker: null
     };
     s.attackers = ATTACK.map(([role, lane]) => ({ role, lane, x: C.OWN_X + 40, y: C.MID + lane }));
     s.dumper = s.attackers[DUMPER];
@@ -71,7 +77,7 @@
     s.half.x -= 30; s.half.y = s.dumper.y + 30;   // the half hovers behind the ball
     s.controlled = s.dumper;
     s.ball = { x: s.dumper.x + 9, y: s.dumper.y, holder: s.dumper };
-    s.defenders = LEVELS[level].team.map(([role, dy]) => ({ role, homeY: C.MID + dy, x: C.TRY_X, y: C.MID + dy }));
+    s.defenders = LEVELS[level].team.map(([role, dy]) => ({ role, homeY: C.MID + dy, x: C.TRY_X, y: C.MID + dy, onside: true }));
     return s;
   }
 
@@ -81,8 +87,9 @@
     s.mark = { x: d.x, y: d.y };
     s.ball.holder = null;
     s.ball.x = d.x; s.ball.y = d.y;
-    // Defence sets 7 m from the mark; inside their 7 m zone that means their try line.
+    // Defence must retreat 7 m from the mark; inside their 7 m zone that means their try line.
     s.onsideX = Math.min(d.x + C.SEVEN, C.TRY_X);
+    for (const def of s.defenders) def.onside = def.x >= s.onsideX - 1;
     s.phase = 'set'; s.t = 0;
     s.controlled = s.half;
     return true;
@@ -95,7 +102,7 @@
     if (vx && vy) { vx *= Math.SQRT1_2; vy *= Math.SQRT1_2; }
     p.x = clamp(p.x + vx * s.T.speed * dt, C.L + C.R, C.RT - C.R);
     p.y = clamp(p.y + vy * s.T.speed * dt, C.T + C.R, C.B - C.R);
-    if (s.phase === 'carry') p.x = Math.min(p.x, C.TRY_X - C.SEVEN);   // dump before their 7 m line
+    if (s.phase === 'carry') p.x = Math.min(p.x, C.TRY_X - C.SEVEN);   // the touch comes before their 7 m line
   }
 
   // Teammates hold their width across the field, drift toward the ball, and stay a few metres
@@ -123,11 +130,36 @@
     const slide = (b.y - C.MID) * T.slide;
     const carrier = b.holder;
     let chaser = null, best = Infinity;
-    if (carrier) for (const d of s.defenders) { const dd = dist(d, carrier); if (dd < best) { best = dd; chaser = d; } }
+    if (carrier) for (const d of s.defenders) {
+      if (!d.onside) continue;
+      const dd = dist(d, carrier); if (dd < best) { best = dd; chaser = d; }
+    }
     for (const d of s.defenders) {
-      if (d === chaser && best < T.engage) moveToward(d, carrier.x, carrier.y, T.chase * dt);
+      if (!d.onside) retreat(s, d, dt);
+      else if (d === chaser && best < T.engage) moveToward(d, carrier.x, carrier.y, (T.chase + s.level * T.chaseInc) * dt);
       else moveLine(d, lineX, clamp(d.homeY + slide, C.T + T.margin, C.B - T.margin), lineSpeed * dt, T.lateral * dt);
     }
+  }
+
+  // Back to the onside line; a defender only counts once they're there.
+  function retreat(s, d, dt) {
+    moveLine(d, s.onsideX, d.y, s.T.setSpeed * dt, 0);
+    if (d.x >= s.onsideX - 1) d.onside = true;
+  }
+
+  // Before the touch: the marker rushes the ball carrier, the rest come up staggered behind.
+  function rushUp(s, dt) {
+    const T = s.T, c = s.dumper;
+    let best = Infinity;
+    for (const d of s.defenders) { const dd = dist(d, c); if (dd < best) { best = dd; s.marker = d; } }
+    const slide = (c.y - C.MID) * T.slide;
+    for (const d of s.defenders) {
+      if (d === s.marker) { moveToward(d, c.x, c.y, T.markSpeed * dt); continue; }
+      const tx = Math.min(s.marker.x + T.stagger, C.TRY_X);
+      moveLine(d, tx, clamp(d.homeY + slide, C.T + T.margin, C.B - T.margin), T.lineUp * dt, T.lateral * dt);
+    }
+    separate(s.defenders);
+    if (best < C.R * 2) dump(s);
   }
 
   function separate(list) {
@@ -155,14 +187,18 @@
     if (s.phase === 'carry') {
       s.ball.x = s.dumper.x + 9; s.ball.y = s.dumper.y;
       support(s, dt, s.dumper);
-      return;                                   // defence holds its try line
+      rushUp(s, dt);
+      return;
     }
 
     if (s.phase === 'set') {
       support(s, dt, s.half);
       if (!s.released && s.t > T.release) { s.released = true; s.slowRelease = true; }
       if (s.released) defend(s, dt);
-      else for (const d of s.defenders) moveLine(d, s.onsideX, d.homeY, T.setSpeed * dt, T.lateral * dt);
+      else for (const d of s.defenders) {
+        if (!d.onside) retreat(s, d, dt);
+        else moveLine(d, s.onsideX, clamp(d.homeY, C.T + T.margin, C.B - T.margin), T.setSpeed * dt, T.lateral * dt);
+      }
       separate(s.defenders);
       if (dist(s.half, s.ball) < C.R + 4) {     // half touches the ball: play is on
         s.ball.holder = s.half; s.phase = 'run'; s.released = true; s.t = 0;
@@ -176,7 +212,7 @@
       defend(s, dt);
       separate(s.defenders);
       for (const d of s.defenders) {
-        if (dist(d, s.half) < C.R * 2) { s.phase = 'touched'; return; }
+        if (d.onside && dist(d, s.half) < C.R * 2) { s.phase = 'touched'; return; }
       }
       if (s.half.x >= C.TRY_X - C.R) {          // half reaches the line: pass to the nearest teammate
         let best = Infinity;
@@ -215,7 +251,6 @@
   const ctx = canvas.getContext('2d');
   const statusEl = document.getElementById('try-game-status');
   const startBtn = document.getElementById('try-game-start');
-  const dumpBtn = document.getElementById('try-game-dump');
   const dialog = document.getElementById('game-dialog');
 
   const COLORS = {
@@ -243,9 +278,8 @@
   }
 
   function onPhase(p) {
-    dumpBtn.hidden = p !== 'carry';
-    if (p === 'carry') say(`${levelLabel()} Run to your spot, then press Space to dump the ball.`);
-    if (p === 'set') say('Defence must set 7 m back. You’re the half now: run onto the ball to scoop it.');
+    if (p === 'carry') say(`${levelLabel()} Run it up. Wherever their marker touches you is where you dump the ball.`);
+    if (p === 'set') say('Touch! Ball dumped. The defence must retreat 7 m. You’re the half: scoop it quickly!');
     if (p === 'run') say('Scooped! Get the half to the try line.');
     if (p === 'passing') say('At the line! The half can’t score, so you pass to your nearest teammate…');
     if (p === 'touched') {
@@ -265,10 +299,6 @@
       }
       startBtn.hidden = false;
     }
-  }
-
-  function doDump() {
-    if (playing && s && dump(s)) clearKeys();
   }
 
   // ---- Drawing ----
@@ -315,12 +345,8 @@
     if (!s) return;
 
     // Where the defence would have to set if you dumped here, and where it is setting now.
-    if (s.phase === 'carry') {
-      const x = Math.min(s.dumper.x + C.SEVEN, C.TRY_X);
-      ctx.lineWidth = 2; vline(x, 'rgba(242,194,27,.45)', [6, 8]);
-      label('7 m', x, C.T + 12, 'rgba(242,194,27,.85)');
-    }
-    if (s.phase === 'set') {
+    const retreating = s.defenders.some((d) => !d.onside);
+    if (s.phase === 'set' || (s.phase === 'run' && retreating)) {
       ctx.lineWidth = 2; vline(s.onsideX, COLORS.bib, [6, 8]);
       label('Onside line', s.onsideX, C.T + 12, COLORS.bib);
       ctx.strokeStyle = COLORS.bib; ctx.lineWidth = 2.5;
@@ -329,7 +355,11 @@
       ctx.moveTo(m.x + 6, m.y - 6); ctx.lineTo(m.x - 6, m.y + 6); ctx.stroke();
     }
 
-    for (const d of s.defenders) dot(d, COLORS.defender, d.role, COLORS.defenderText);
+    for (const d of s.defenders) {
+      ctx.globalAlpha = d.onside ? 1 : 0.45;               // still retreating: can't make a touch yet
+      dot(d, COLORS.defender, d.role, COLORS.defenderText);
+      ctx.globalAlpha = 1;
+    }
     for (const a of s.attackers) dot(a, COLORS.bib, a.role, COLORS.ink);
 
     // Highlight the player you're controlling.
@@ -364,11 +394,6 @@
   function onKey(e, down) {
     if (!playing || !dialog.open) return;
     const key = e.key.toLowerCase();
-    if (key === ' ' || key === 'enter') {
-      if (down) doDump();
-      e.preventDefault();
-      return;
-    }
     const k = KEYMAP[key];
     if (!k) return;
     keys[k] = down;
@@ -387,7 +412,6 @@
     btn.addEventListener('pointerleave', off);
     btn.addEventListener('pointercancel', off);
   });
-  dumpBtn.addEventListener('click', () => { doDump(); canvas.focus({ preventScroll: true }); });
   startBtn.addEventListener('click', () => { clearKeys(); start(); });
 
   // Pop-up: opened from the "play a mini-game while you wait" buttons.
@@ -400,7 +424,6 @@
     clearKeys();
     if (playing) {
       playing = false; s = create(level);
-      dumpBtn.hidden = true;
       startBtn.hidden = false; startBtn.textContent = 'Start';
       say(levelLabel());
     }
