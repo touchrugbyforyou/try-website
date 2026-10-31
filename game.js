@@ -333,6 +333,8 @@
 
   const say = (text) => { statusEl.textContent = text; };
   const levelLabel = () => `Level ${level + 1} of ${LEVELS.length}: ${LEVELS[level].name}.`;
+  const hasKeyboard = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const spaceTo = (what) => (hasKeyboard ? ` Press Space to ${what}.` : '');
   const clearKeys = () => { for (const k in keys) keys[k] = typeof keys[k] === 'number' ? 0 : false; resetStick(); };
 
   function start() {
@@ -352,18 +354,18 @@
     if (p === 'touched') {
       playing = false;
       say(s.reason === 'six'
-        ? `That’s the sixth touch, so it’s a changeover. ${levelLabel()}`
-        : `Touched! The half was caught with the ball, so it’s a changeover. ${levelLabel()}`);
+        ? `That’s the sixth touch, so it’s a changeover.${spaceTo('try again')}`
+        : `Touched! The half was caught with the ball, so it’s a changeover.${spaceTo('try again')}`);
       startBtn.textContent = 'Try again'; startBtn.hidden = false;
     }
     if (p === 'scored') {
       playing = false; tries++;
       if (level === LEVELS.length - 1) {
-        say(`Try! You beat the full six. ${tries} tries scored. Think you can do it again?`);
+        say(`Try! You beat the full six. ${tries} tries scored.${spaceTo('play again')}`);
         startBtn.textContent = 'Play again'; level = 0;
       } else {
         level++;
-        say(`Try! Next up, level ${level + 1}: ${LEVELS[level].name}.`);
+        say(`Try! Next up, level ${level + 1}: ${LEVELS[level].name}.${spaceTo('start it')}`);
         startBtn.textContent = 'Next level';
       }
       startBtn.hidden = false;
@@ -479,13 +481,16 @@
   const KEYMAP = { w: 'up', a: 'left', s: 'down', d: 'right',
                    arrowup: 'up', arrowleft: 'left', arrowdown: 'down', arrowright: 'right' };
   function onKey(e, down) {
-    if (!playing || !dialog.open) return;
+    if (!dialog.open) return;
     const key = e.key.toLowerCase();
-    if (key === ' ') {
-      if (down && !e.repeat) doPass();
+    if (key === ' ') {                          // Space: start / next level when idle, pass when playing
       e.preventDefault();
+      if (!down || e.repeat) return;
+      if (playing) doPass();
+      else if (!startBtn.hidden) { clearKeys(); start(); }
       return;
     }
+    if (!playing) return;
     const k = KEYMAP[key];
     if (!k) return;
     keys[k] = down;
@@ -557,11 +562,11 @@
     if (playing) {
       playing = false; s = create(level);
       startBtn.hidden = false; startBtn.textContent = 'Start';
-      say(levelLabel());
+      say(levelLabel() + spaceTo('start'));
     }
   });
 
   s = create(level);
-  say(levelLabel());
+  say(levelLabel() + spaceTo('start'));
   requestAnimationFrame(loop);
 })();

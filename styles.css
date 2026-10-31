@@ -261,16 +261,30 @@ a:hover { color: var(--pitch); }
 }
 .link-btn:hover { color: var(--pitch); }
 button.btn { font: inherit; font-weight: 600; cursor: pointer; }
-.game-intro { max-width: 40rem; margin: 0 0 1.5rem; color: #E6EADF; }
+.game-intro { max-width: 40rem; margin: 0 0 .75rem; color: #E6EADF; }
+.game-rules {
+  max-width: 40rem;
+  margin: 0 0 .75rem;
+  padding-left: 1.4rem;
+  color: #E6EADF;
+  font-size: 1rem;
+}
+.game-rules li { margin-bottom: .3rem; }
+.game-controls { max-width: 40rem; margin: 0 0 1.25rem; font-size: 1rem; color: #E6EADF; }
+@media (hover: none) and (pointer: coarse) {
+  .game-controls { display: none; }
+}
 .game { max-width: 700px; }
 .game-stage { position: relative; }
 #try-game {
   display: block;
-  width: 100%;
+  width: min(100%, calc((100vh - 30rem) * 1.4));   /* keep the whole dialog on screen */
   height: auto;
+  margin-inline: auto;
   border-radius: 6px;
   touch-action: none;
 }
+#try-game:focus { outline: none; }
 .game-bar {
   display: flex;
   align-items: center;
@@ -341,7 +355,9 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
 }
 .game-dialog.is-full[open] { display: flex; flex-direction: column; }
 .game-dialog.is-full h2,
-.game-dialog.is-full .game-intro { display: none; }
+.game-dialog.is-full .game-intro,
+.game-dialog.is-full .game-rules,
+.game-dialog.is-full .game-controls { display: none; }
 .game-dialog.is-full .game {
   max-width: none;
   flex: 1;
@@ -351,6 +367,9 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
 }
 .game-dialog.is-full .game-stage { flex: 1; min-height: 0; }
 .game-dialog.is-full #try-game { width: 100%; height: 100%; object-fit: contain; }
+@media (max-height: 640px), (max-width: 600px) {
+  #try-game { width: 100%; }
+}
 .game-dialog.is-full .game-bar { margin-top: .5rem; padding-right: 2.5rem; }
 .game-dialog.is-full .touch-controls {
   position: absolute;
