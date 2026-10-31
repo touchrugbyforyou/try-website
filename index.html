@@ -74,7 +74,7 @@
           </li>
         </ol>
         <div class="notice">
-          <p><strong>Applications aren't open yet.</strong> The first scholarship cycle is coming soon. <a href="mailto:contact@touchrugbyforyou.org?subject=Notify%20me%20when%20TRY%20scholarships%20open">Email us</a> and we'll let you know when it opens.</p>
+          <p><strong>Applications aren't open yet.</strong> The first scholarship cycle is coming soon. In the meantime, <button type="button" class="link-btn" data-open-game>play a mini-game while you wait</button>.</p>
         </div>
       </div>
     </section>
@@ -85,7 +85,7 @@
         <div class="prose">
           <p>We're getting set up to accept donations. When giving opens, every gift goes into the scholarship fund, and you'll be able to direct it to a specific fund, such as players in your region.</p>
           <p><strong>Check your employer's matching program.</strong> Many companies match employee donations to nonprofits, often dollar for dollar. When you give, a quick match request can double what reaches players.</p>
-          <p><a class="btn btn-primary" href="mailto:contact@touchrugbyforyou.org?subject=Tell%20me%20when%20TRY%20donations%20open">Tell me when donations open</a></p>
+          <p><button type="button" class="btn btn-primary" data-open-game>Play a mini-game while you wait</button></p>
         </div>
       </div>
     </section>
@@ -108,5 +108,24 @@
       <p>&copy; 2026 Touch Rugby for You</p>
     </div>
   </footer>
+  <dialog id="game-dialog" class="game-dialog" aria-labelledby="game-title">
+    <button type="button" class="game-close" data-close-game aria-label="Close game">&times;</button>
+    <h2 id="game-title">Can you score a try?</h2>
+        <p class="game-intro">Run past the defence and over the try line. Move with W A S D (or the arrows on a phone). Every try brings more defenders: middles first, then links, then wings.</p>
+        <div class="game">
+          <canvas id="try-game" width="700" height="500" tabindex="0" aria-label="Touch rugby game. Use W A S D to move your player past the defenders to the try line on the right."></canvas>
+          <div class="game-bar">
+            <p id="try-game-status" role="status">Level 1 of 4: One middle.</p>
+            <button id="try-game-start" class="btn btn-primary" type="button">Start</button>
+          </div>
+          <div class="dpad" aria-hidden="true">
+            <button type="button" data-dir="up" tabindex="-1">&#9650;</button>
+            <button type="button" data-dir="left" tabindex="-1">&#9664;</button>
+            <button type="button" data-dir="down" tabindex="-1">&#9660;</button>
+            <button type="button" data-dir="right" tabindex="-1">&#9654;</button>
+          </div>
+        </div>
+  </dialog>
+  <script src="game.js"></script>
 </body>
 </html>
