@@ -138,7 +138,8 @@
       }
       let tx = anchor.x - 28, ty = C.MID + a.lane + (anchor.y - C.MID) * 0.35;
       if (s.phase === 'carry' && a === s.half) { tx = anchor.x - 30; ty = anchor.y + (anchor.y > C.MID ? -30 : 30); }
-      moveToward(a, tx, clamp(ty, C.T + C.R, C.B - C.R), s.T.support * dt);
+      const far = Math.hypot(tx - a.x, ty - a.y) > 40;           // sprint to catch up if left behind
+      moveToward(a, tx, clamp(ty, C.T + C.R, C.B - C.R), (far ? s.T.speed + 20 : s.T.support) * dt);
       team.push(a);
     }
     separate(team);
@@ -160,6 +161,7 @@
     const lo = C.T + C.R + 8, hi = C.B - C.R - 8;
     const startY = ds.map((d) => d.y);
     ds.forEach((d, k) => {
+      d.fromX = d.x; d.fromY = d.y;
       const inTouchHalf = touchTop ? k < half : k >= half;
       if (inTouchHalf) {
         const back = Math.max(0, s.onsideX - d.x);
@@ -254,7 +256,7 @@
     for (const a of s.attackers) {
       if (a === c) continue;
       const range = dist(a, c);
-      if (!atLine && (a.x > c.x + 4 || range > 230 || range < 20)) continue;
+      if (!atLine && (a.x > c.x + 6 || range > 300 || range < 20)) continue;
       let space = 220, lane = 160;
       for (const d of live) {
         space = Math.min(space, dist(d, a));
@@ -364,6 +366,7 @@
   const startBtn = document.getElementById('try-game-start');
   const dialog = document.getElementById('game-dialog');
   const passTouch = document.getElementById('try-pass-touch');
+  const passBtn = document.getElementById('try-game-pass');
   const fullBtn = document.getElementById('try-game-full');
   const stick = document.getElementById('try-stick');
   const knob = stick.querySelector('.stick-knob');
@@ -395,6 +398,7 @@
   }
 
   function onPhase(p) {
+    passBtn.hidden = p !== 'run';
     if (p === 'carry') say(`${levelLabel()} Run it up. Wherever their marker touches you is where you dump the ball.`);
     if (p === 'set') say(s.touches >= 5
       ? 'Touch 5! Last chance: scoop it and score before the sixth touch.'
@@ -481,16 +485,24 @@
       dot(d, COLORS.defender, d.role, COLORS.defenderText);
       ctx.globalAlpha = 1;
     }
-    // Name the defensive calls while the line resets after a touch.
-    if (s.phase === 'set' && s.t < 1.6) {
-      ctx.globalAlpha = Math.min(1, (1.6 - s.t) * 2);
-      ctx.font = '600 12px Barlow, Arial, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    // Show each defender's corner (yellow) or shut (white) path as the line resets after a touch.
+    if (s.phase === 'set' || (s.phase === 'run' && retreating)) {
+      ctx.lineWidth = 2; ctx.setLineDash([3, 5]);
       for (const d of s.defenders) {
-        if (!d.call) continue;
-        ctx.fillStyle = d.call === 'Corner' ? COLORS.bib : COLORS.defender;
-        ctx.fillText(d.call, d.x + C.R + 5, d.y + 1);
+        if (d.fromX == null) continue;
+        const tx = s.onsideX, ty = d.retreatY;
+        ctx.strokeStyle = d.call === 'Corner' ? 'rgba(242,194,27,.9)' : 'rgba(245,246,239,.8)';
+        ctx.beginPath(); ctx.moveTo(d.fromX, d.fromY); ctx.lineTo(tx, ty); ctx.stroke();
+        const ang = Math.atan2(ty - d.fromY, tx - d.fromX);                 // small arrowhead
+        if (Math.hypot(tx - d.fromX, ty - d.fromY) > 10) {
+          ctx.setLineDash([]); ctx.fillStyle = ctx.strokeStyle; ctx.beginPath();
+          ctx.moveTo(tx, ty);
+          ctx.lineTo(tx - 8 * Math.cos(ang - 0.45), ty - 8 * Math.sin(ang - 0.45));
+          ctx.lineTo(tx - 8 * Math.cos(ang + 0.45), ty - 8 * Math.sin(ang + 0.45));
+          ctx.closePath(); ctx.fill(); ctx.setLineDash([3, 5]);
+        }
       }
-      ctx.globalAlpha = 1;
+      ctx.setLineDash([]);
     }
     for (const a of s.attackers) dot(a, COLORS.bib, a.role, COLORS.ink);
 
@@ -544,7 +556,7 @@
   function onKey(e, down) {
     if (!dialog.open) return;
     const key = e.key.toLowerCase();
-    if (key === ' ') {                          // Space: start / next level when idle, pass when playing
+    if (key === ' ' || key === 'enter') {      // Space (or Enter): start / next level when idle, pass when playing
       e.preventDefault();
       if (!down || e.repeat) return;
       if (playing) doPass();
@@ -585,6 +597,8 @@
   ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((t) =>
     stick.addEventListener(t, (e) => { if (e.pointerId === stickId) resetStick(); }));
   passTouch.addEventListener('pointerdown', (e) => { e.preventDefault(); doPass(); });
+  passBtn.addEventListener('click', () => { doPass(); canvas.focus({ preventScroll: true }); });
+  canvas.addEventListener('pointerdown', (e) => { if (e.pointerType === 'mouse' && playing) doPass(); });
 
   // Full screen: real full screen where the browser allows it, plus a layout that fills the window.
   function setFull(on) {
@@ -607,7 +621,10 @@
     if (!document.fullscreenElement && dialog.classList.contains('is-full')) setFull(false);
   });
 
-  function doPass() { if (playing && s) pass(s); }
+  function doPass() {
+    if (!playing || !s || s.phase !== 'run' || s.flight) return;
+    if (!pass(s)) say('No one to pass to yet. Passes can\u2019t go forward, so let a teammate get level or behind you.');
+  }
   startBtn.addEventListener('click', () => { clearKeys(); start(); });
 
   // Pop-up: opened from the "play a mini-game while you wait" buttons.
@@ -622,6 +639,7 @@
     setFull(false);
     if (playing) {
       playing = false; s = create(level);
+      passBtn.hidden = true;
       startBtn.hidden = false; startBtn.textContent = 'Start';
       say(levelLabel() + spaceTo('start'));
     }

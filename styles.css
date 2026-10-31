@@ -272,7 +272,7 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
 .game-rules li { margin-bottom: .3rem; }
 .game-controls { max-width: 40rem; margin: 0 0 1.25rem; font-size: 1rem; color: #E6EADF; }
 @media (hover: none) and (pointer: coarse) {
-  .game-controls { display: none; }
+  .game-controls, .desk-only { display: none !important; }
 }
 .game { max-width: 700px; }
 .game-stage { position: relative; }

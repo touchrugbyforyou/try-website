@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20261031b">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -117,7 +117,7 @@
       <li>Scoop it with your half, then run or pass. Passes go to your best-placed teammate, never forward.</li>
       <li>The half can’t score, and if the half is touched holding the ball, it’s a changeover. Anyone else who’s touched dumps it again, up to six touches.</li>
     </ol>
-    <p class="game-controls"><strong>Controls:</strong> W A S D to move. Space to start and to pass.</p>
+    <p class="game-controls"><strong>Controls:</strong> W A S D to move. Space to start and to pass (or click the pitch).</p>
         <div class="game">
           <p class="rotate-hint">Turn your phone sideways for a bigger pitch.</p>
           <div class="game-stage">
@@ -130,12 +130,13 @@
           <div class="game-bar">
             <p id="try-game-status" role="status">Level 1 of 4: One middle.</p>
             <span class="game-actions">
+              <button id="try-game-pass" class="btn btn-ghost desk-only" type="button" hidden>Pass</button>
               <button id="try-game-full" class="btn btn-ghost" type="button">Full screen</button>
               <button id="try-game-start" class="btn btn-primary" type="button">Start</button>
             </span>
           </div>
         </div>
   </dialog>
-  <script src="game.js"></script>
+  <script src="game.js?v=20261031b"></script>
 </body>
 </html>
