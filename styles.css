@@ -222,6 +222,16 @@ a:hover { color: var(--pitch); }
   padding-block: 2rem;
 }
 .site-footer p { margin: 0 0 .35rem; }
+.social a {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  color: var(--chalk);
+  text-decoration: none;
+  font-weight: 500;
+  margin-block: .4rem;
+}
+.social a:hover { color: var(--bib); }
 
 /* Small screens */
 @media (max-width: 860px) {
