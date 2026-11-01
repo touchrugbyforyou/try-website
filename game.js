@@ -419,7 +419,7 @@
     if (p === 'carry') say(`${levelLabel()} Run it up. Wherever their marker touches you is where you dump the ball.`);
     if (p === 'set') say(s.touches >= 5
       ? 'Touch 5! Last chance: scoop it and score before the sixth touch.'
-      : `Touch ${s.touches}! Ball dumped and the defence must retreat 7 m. You’re the half: scoop it quickly!`);
+      : `Touch ${s.touches}! Ball dumped and the defence must retreat 7\u00a0m. You’re the half: scoop it quickly!`);
     if (p === 'run') say('Scooped! Run for the line, or press Space to pass to the open teammate (circled).');
     if (p === 'passing') say('At the line! The half can’t score, so you pass to your nearest teammate…');
     if (p === 'touched') {
@@ -452,13 +452,13 @@
     ctx.setLineDash([]);
   }
   function label(text, x, y, color) {
-    ctx.fillStyle = color; ctx.font = '600 12px Barlow, Arial, sans-serif';
+    ctx.fillStyle = color; ctx.font = '600 12px Figtree, Arial, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(text, x, y);
   }
   function dot(p, fill, text, textColor) {
     ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(p.x, p.y, C.R, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = textColor; ctx.font = '700 13px Barlow, Arial, sans-serif';
+    ctx.fillStyle = textColor; ctx.font = '700 13px Figtree, Arial, sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(text, p.x, p.y + 1);
   }
@@ -548,7 +548,7 @@
     if (playing || s.touches) {                       // touch counter
       ctx.fillStyle = 'rgba(22,32,26,.65)';
       ctx.fillRect(C.L + 8, C.B - 30, 92, 22);
-      ctx.fillStyle = COLORS.defender; ctx.font = '600 13px Barlow, Arial, sans-serif';
+      ctx.fillStyle = COLORS.defender; ctx.font = '600 13px Figtree, Arial, sans-serif';
       ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
       ctx.fillText(`Touch ${Math.min(s.touches, 6)} of 6`, C.L + 16, C.B - 19);
     }

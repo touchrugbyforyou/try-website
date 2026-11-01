@@ -1,3 +1,18 @@
+/* Fonts (self-hosted, both under the SIL Open Font License; see fonts/) */
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("fonts/bricolage-grotesque.woff2") format("woff2");
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Figtree";
+  src: url("fonts/figtree.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: swap;
+}
+
 :root {
   --pitch: #123F2A;
   --turf: #2C7A4B;
@@ -5,8 +20,8 @@
   --bib: #F2C21B;
   --ink: #16201A;
   --muted: #45524A;
-  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
-  --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --body: "Figtree", "Helvetica Neue", Arial, sans-serif;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -112,8 +127,8 @@ a:hover { color: var(--pitch); }
   font-family: var(--display);
   font-weight: 800;
   font-size: clamp(2.75rem, 7vw, 5.5rem);
-  line-height: .95;
-  letter-spacing: -.005em;
+  line-height: .98;
+  letter-spacing: -.02em;
   max-width: 13ch;
   margin: 0 0 1.5rem;
 }
@@ -160,6 +175,7 @@ a:hover { color: var(--pitch); }
 .band h2 {
   font-family: var(--display);
   font-weight: 800;
+  letter-spacing: -.02em;
   font-size: clamp(2.25rem, 4.5vw, 3.25rem);
   line-height: 1;
   color: var(--pitch);
