@@ -374,8 +374,8 @@
 
   const COLORS = {
     pitchA: '#174a32', pitchB: '#123F2A', chalk: 'rgba(245,246,239,.75)',
-    chalkSoft: 'rgba(245,246,239,.35)', bib: '#F2C21B', ink: '#16201A',
-    defender: '#F5F6EF', defenderText: '#123F2A'
+    chalkSoft: 'rgba(245,246,239,.35)', bib: '#FF7A3D', ink: '#0E1C26',
+    defender: '#F5F6EF', defenderText: '#0B3B5C'
   };
 
   let level = 0, tries = 0, playing = false, s = null, lastPhase = null, lastSlow = false, lastT = 0;
@@ -482,7 +482,7 @@
     vline(C.W / 2, COLORS.chalkSoft, [10, 10]);
     vline(C.OWN_X + C.SEVEN, COLORS.chalkSoft, [10, 10]);
     vline(C.TRY_X - C.SEVEN, COLORS.chalkSoft, [10, 10]);
-    ctx.fillStyle = 'rgba(242,194,27,.10)';
+    ctx.fillStyle = 'rgba(255,122,61,.10)';
     ctx.fillRect(C.TRY_X, C.T, C.RT - C.TRY_X, C.B - C.T);
 
     if (!s) return;
@@ -509,7 +509,7 @@
       for (const d of s.defenders) {
         if (d.fromX == null) continue;
         const tx = s.onsideX, ty = d.retreatY;
-        ctx.strokeStyle = d.call === 'Corner' ? 'rgba(242,194,27,.9)' : 'rgba(245,246,239,.8)';
+        ctx.strokeStyle = d.call === 'Corner' ? 'rgba(255,122,61,.95)' : 'rgba(245,246,239,.8)';
         ctx.beginPath(); ctx.moveTo(d.fromX, d.fromY); ctx.lineTo(tx, ty); ctx.stroke();
         const ang = Math.atan2(ty - d.fromY, tx - d.fromX);                 // small arrowhead
         if (Math.hypot(tx - d.fromX, ty - d.fromY) > 10) {
@@ -546,7 +546,7 @@
     ball(s.ball);
 
     if (playing || s.touches) {                       // touch counter
-      ctx.fillStyle = 'rgba(22,32,26,.65)';
+      ctx.fillStyle = 'rgba(14,28,38,.65)';
       ctx.fillRect(C.L + 8, C.B - 30, 92, 22);
       ctx.fillStyle = COLORS.defender; ctx.font = '600 13px Barlow, Arial, sans-serif';
       ctx.textAlign = 'left'; ctx.textBaseline = 'middle';

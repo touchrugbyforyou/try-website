@@ -1,10 +1,13 @@
 :root {
-  --pitch: #123F2A;
-  --turf: #2C7A4B;
-  --chalk: #F5F6EF;
-  --bib: #F2C21B;
-  --ink: #16201A;
-  --muted: #45524A;
+  /* Ocean & Signal palette (see the Style Guide tab in the TRY plan) */
+  --pitch: #0B3B5C;   /* Ocean: brand background */
+  --turf: #0A6F94;    /* Tide: links and accents on light backgrounds */
+  --chalk: #F2F7FA;   /* Mist: light section background */
+  --bib: #FF7A3D;     /* Signal: main buttons and highlights */
+  --ink: #0E1C26;     /* Deep: body text and footer */
+  --muted: #46566A;   /* Slate: secondary text */
+  --foam: #D8E6EF;    /* Foam: body text on Ocean */
+  --signal-hover: #FF915E;
   --display: "Barlow Condensed", "Arial Narrow", sans-serif;
   --body: "Barlow", "Helvetica Neue", Arial, sans-serif;
 }
@@ -121,7 +124,7 @@ a:hover { color: var(--pitch); }
   max-width: 34rem;
   font-size: 1.25rem;
   margin: 0 0 2.25rem;
-  color: #E6EADF;
+  color: var(--foam);
 }
 .actions {
   display: flex;
@@ -143,7 +146,7 @@ a:hover { color: var(--pitch); }
   background: var(--bib);
   color: var(--ink);
 }
-.btn-primary:hover { background: #ffd43d; color: var(--ink); }
+.btn-primary:hover { background: var(--signal-hover); color: var(--ink); }
 .btn-ghost {
   border-color: var(--chalk);
   background: transparent;
@@ -229,7 +232,7 @@ a:hover { color: var(--pitch); }
   background: var(--pitch);
   color: var(--chalk);
 }
-.game-dialog::backdrop { background: rgba(22, 32, 26, .7); }
+.game-dialog::backdrop { background: rgba(14, 28, 38, .7); }
 .game-dialog h2 {
   font-family: var(--display);
   font-weight: 800;
@@ -261,16 +264,16 @@ a:hover { color: var(--pitch); }
 }
 .link-btn:hover { color: var(--pitch); }
 button.btn { font: inherit; font-weight: 600; cursor: pointer; }
-.game-intro { max-width: 40rem; margin: 0 0 .75rem; color: #E6EADF; }
+.game-intro { max-width: 40rem; margin: 0 0 .75rem; color: var(--foam); }
 .game-rules {
   max-width: 40rem;
   margin: 0 0 .75rem;
   padding-left: 1.4rem;
-  color: #E6EADF;
+  color: var(--foam);
   font-size: 1rem;
 }
 .game-rules li { margin-bottom: .3rem; }
-.game-controls { max-width: 40rem; margin: 0 0 1.25rem; font-size: 1rem; color: #E6EADF; }
+.game-controls { max-width: 40rem; margin: 0 0 1.25rem; font-size: 1rem; color: var(--foam); }
 .game-tally { margin: -.75rem 0 1.25rem; font-size: 1rem; font-weight: 600; color: var(--bib); }
 @media (hover: none) and (pointer: coarse) {
   .game-controls, .desk-only { display: none !important; }
@@ -315,8 +318,8 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: rgba(245, 246, 239, .12);
-  border: 2px solid rgba(245, 246, 239, .35);
+  background: rgba(242, 247, 250, .12);
+  border: 2px solid rgba(242, 247, 250, .35);
   touch-action: none;
 }
 .stick-knob {
@@ -341,7 +344,7 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
   font: 600 1.15rem var(--body);
   touch-action: none;
 }
-.pass-touch:active { background: #ffd43d; }
+.pass-touch:active { background: var(--signal-hover); }
 
 /* Full screen: the game fills the screen, controls float in the space beside the pitch */
 .game-dialog.is-full {
@@ -389,7 +392,7 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
     display: block;
     margin: 0 0 .5rem;
     font-size: .95rem;
-    color: #E6EADF;
+    color: var(--foam);
   }
 }
 .game-dialog.is-full .stick,
@@ -398,7 +401,7 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
 /* Footer */
 .site-footer {
   background: var(--ink);
-  color: #C9D0C6;
+  color: #B8C7D3;
   font-size: .95rem;
   padding-block: 2rem;
 }
