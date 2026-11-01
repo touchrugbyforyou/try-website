@@ -407,6 +407,12 @@
     } catch (err) { /* offline or blocked: leave the tally hidden */ }
   }
 
+  // Visit stats (GoatCounter): record a named event. Skipped for test runs.
+  function track(path, title) {
+    if (testLevel || !window.goatcounter || !window.goatcounter.count) return;
+    try { window.goatcounter.count({ path, title, event: true }); } catch (err) { /* stats are optional */ }
+  }
+
   function start() {
     s = create(level);
     playing = true; lastPhase = null; lastSlow = false;
@@ -432,6 +438,7 @@
     if (p === 'scored') {
       playing = false; tries++;
       tally('hit');
+      track('try-scored', 'Scored a try');
       if (level === LEVELS.length - 1) {
         say(`Try! You beat the full six. ${tries} tries scored.${spaceTo('play again')}`);
         startBtn.textContent = 'Play again'; level = 0;
