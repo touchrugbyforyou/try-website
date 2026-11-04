@@ -411,6 +411,35 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
 .game-dialog.is-full .stick,
 .game-dialog.is-full .pass-touch { pointer-events: auto; opacity: .9; }
 
+/* FAQ */
+.faq { max-width: 40rem; border-top: 2px solid var(--pitch); }
+.faq details { border-bottom: 1px solid #CCD3C8; }
+.faq summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 0;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 1.25;
+  color: var(--pitch);
+  cursor: pointer;
+  list-style: none;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after {
+  content: "+";
+  flex: none;
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--turf);
+  transition: transform .15s ease;
+}
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq details p { margin: 0 0 1.25rem; color: var(--muted); }
+
 /* Footer */
 .site-footer {
   background: var(--ink);
