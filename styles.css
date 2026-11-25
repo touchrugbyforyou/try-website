@@ -105,6 +105,16 @@ a:hover { color: var(--pitch); }
 }
 .site-header nav a:hover { color: var(--bib); }
 
+.site-header nav a.nav-donate {
+  background: var(--bib);
+  color: var(--ink);
+  padding: .35rem .9rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.site-header nav a.nav-donate:hover { background: #ffd43d; color: var(--ink); }
+.site-header ul { align-items: center; }
+
 /* Hero: the field */
 .hero {
   position: relative;
@@ -191,6 +201,7 @@ a:hover { color: var(--pitch); }
 .prose { max-width: 40rem; }
 .prose p { margin: 0 0 1.1rem; }
 .prose p:last-child { margin-bottom: 0; }
+.prose .note { font-size: 1rem; color: var(--muted); }
 
 /* Steps: a real sequence, so numbered */
 .steps {
@@ -466,7 +477,7 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
 }
 @media (max-width: 520px) {
   body { font-size: 1.0625rem; }
-  .site-header ul { gap: 1rem; font-size: .95rem; }
+  .site-header ul { gap: .5rem 1rem; font-size: .95rem; flex-wrap: wrap; }
   .steps { grid-template-columns: 1fr; }
   .hero-copy { padding-block: 3.5rem; }
 }
