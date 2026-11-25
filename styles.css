@@ -115,12 +115,8 @@ a:hover { color: var(--pitch); }
 .site-header nav a.nav-donate:hover { background: #ffd43d; color: var(--ink); }
 .site-header ul { align-items: center; }
 
-/* Givebutter pop-up buttons: plain link shows until the widget loads, and if it never does */
-.gb-donate { display: inline-block; }
-.gb-donate givebutter-widget { display: none; }
-.gb-ready .gb-donate givebutter-widget { display: inline-block; }
-.gb-ready .gb-donate .gb-link { display: none; }
-.gb-fallback .gb-donate .gb-link { display: inline-block; }
+/* Hidden Givebutter widget: our own Donate buttons open its pop-up */
+.gb-hidden { position: absolute; left: -10000px; top: 0; }  /* off-screen, not transparent, so its fixed pop-up still shows */
 
 /* Hero: the field */
 .hero {
