@@ -115,6 +115,13 @@ a:hover { color: var(--pitch); }
 .site-header nav a.nav-donate:hover { background: #ffd43d; color: var(--ink); }
 .site-header ul { align-items: center; }
 
+/* Givebutter pop-up buttons: plain link shows until the widget loads, and if it never does */
+.gb-donate { display: inline-block; }
+.gb-donate givebutter-button { display: none; }
+.gb-ready .gb-donate givebutter-button { display: inline-block; }
+.gb-ready .gb-donate .gb-link { display: none; }
+.gb-fallback .gb-donate .gb-link { display: inline-block; }
+
 /* Hero: the field */
 .hero {
   position: relative;
@@ -201,8 +208,6 @@ a:hover { color: var(--pitch); }
 .prose { max-width: 40rem; }
 .prose p { margin: 0 0 1.1rem; }
 .prose p:last-child { margin-bottom: 0; }
-.gb-widget { margin: 0 0 .75rem; min-height: 3rem; }
-.gb-fallback { font-size: 1rem; color: var(--muted); }
 .prose .note { font-size: 1rem; color: var(--muted); }
 
 /* Steps: a real sequence, so numbered */
