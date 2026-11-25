@@ -201,6 +201,8 @@ a:hover { color: var(--pitch); }
 .prose { max-width: 40rem; }
 .prose p { margin: 0 0 1.1rem; }
 .prose p:last-child { margin-bottom: 0; }
+.gb-widget { margin: 0 0 .75rem; min-height: 3rem; }
+.gb-fallback { font-size: 1rem; color: var(--muted); }
 .prose .note { font-size: 1rem; color: var(--muted); }
 
 /* Steps: a real sequence, so numbered */
