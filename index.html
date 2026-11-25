@@ -111,7 +111,7 @@
   </script>
   <link rel="preload" href="fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20261124e">
+  <link rel="stylesheet" href="styles.css?v=20261124f">
   <script async src="https://widgets.givebutter.com/latest.umd.cjs?acct=2XNsycmCePTp1ATm&amp;p=other"></script>
 </head>
 <body>
@@ -277,21 +277,27 @@
           </div>
         </div>
   </dialog>
-  <div class="gb-hidden" aria-hidden="true"><givebutter-widget id="LYODEK"></givebutter-widget></div>
+  <dialog id="donate-dialog" class="donate-dialog" aria-labelledby="donate-title">
+    <button type="button" class="game-close" data-close-donate aria-label="Close">&times;</button>
+    <h2 id="donate-title">Support TRY</h2>
+    <p class="donate-intro">Every gift goes into the scholarship fund. TRY is a 501(c)(3), <span style="white-space:nowrap">EIN 43-2815674</span>.</p>
+    <div class="donate-form"><givebutter-widget id="j2Oxr8"></givebutter-widget></div>
+    <p class="donate-alt">Form not loading? <a href="https://givebutter.com/touch-rugby-for-you" rel="noopener" data-goatcounter-click="donate-dialog-link" data-goatcounter-title="Donate dialog fallback link">Donate on Givebutter</a>.</p>
+  </dialog>
   <script>
-    // Donate links open the Givebutter pop-up when its widget has loaded; otherwise they go to the Givebutter page.
-    document.addEventListener('click', function (e) {
-      var link = e.target.closest && e.target.closest('[data-gb-donate]');
-      if (!link) return;
-      var w = document.querySelector('.gb-hidden givebutter-widget');
-      var roots = [w, w && w.shadowRoot];
-      for (var i = 0; i < roots.length; i++) {
-        var btn = roots[i] && roots[i].querySelector('button, a, [role="button"]');
-        if (btn) { e.preventDefault(); btn.click(); return; }
-      }
-    });
+    // Donate buttons open the donation pop-up; without dialog support they go to the Givebutter page.
+    (function () {
+      var dlg = document.getElementById('donate-dialog');
+      if (!dlg || typeof dlg.showModal !== 'function') return;
+      document.addEventListener('click', function (e) {
+        var link = e.target.closest && e.target.closest('[data-gb-donate]');
+        if (link) { e.preventDefault(); dlg.showModal(); }
+      });
+      dlg.querySelector('[data-close-donate]').addEventListener('click', function () { dlg.close(); });
+      dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+    })();
   </script>
-  <script src="game.js?v=20261124e"></script>
+  <script src="game.js?v=20261124f"></script>
   <script data-goatcounter="https://touchrugbyforyou.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>

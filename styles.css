@@ -115,8 +115,32 @@ a:hover { color: var(--pitch); }
 .site-header nav a.nav-donate:hover { background: #ffd43d; color: var(--ink); }
 .site-header ul { align-items: center; }
 
-/* Hidden Givebutter widget: our own Donate buttons open its pop-up */
-.gb-hidden { position: absolute; left: -10000px; top: 0; }  /* off-screen, not transparent, so its fixed pop-up still shows */
+/* Donation pop-up: our dialog, Givebutter's form inside */
+.donate-dialog {
+  width: min(560px, 100% - 1.5rem);
+  max-height: calc(100% - 1.5rem);
+  overflow: auto;
+  padding: 2rem 1.5rem 1.5rem;
+  border: 0;
+  border-top: 8px solid var(--bib);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+}
+.donate-dialog::backdrop { background: rgba(22, 32, 26, .7); }
+.donate-dialog h2 {
+  font-family: var(--display);
+  font-weight: 800;
+  letter-spacing: -.02em;
+  font-size: 2.25rem;
+  line-height: 1;
+  color: var(--pitch);
+  margin: 0 0 .5rem;
+}
+.donate-dialog .game-close { color: var(--pitch); }
+.donate-intro { margin: 0 0 1.25rem; color: var(--muted); font-size: 1rem; }
+.donate-form { min-height: 12rem; }
+.donate-alt { margin: 1rem 0 0; font-size: .95rem; color: var(--muted); }
 
 /* Hero: the field */
 .hero {
