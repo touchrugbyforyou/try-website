@@ -140,7 +140,8 @@ a:hover { color: var(--pitch); }
 .donate-dialog .game-close { color: var(--pitch); }
 .donate-intro { margin: 0 0 1.25rem; color: var(--muted); font-size: 1rem; }
 .donate-form { min-height: 12rem; }
-.donate-alt { margin: 1rem 0 0; font-size: .95rem; color: var(--muted); }
+.donate-other { margin: 1.25rem 0 0; padding-top: 1rem; border-top: 1px solid #CCD3C8; font-size: 1rem; }
+.donate-alt { margin: .5rem 0 0; font-size: .95rem; color: var(--muted); }
 
 /* Hero: the field */
 .hero {
