@@ -117,8 +117,8 @@ a:hover { color: var(--pitch); }
 
 /* Givebutter pop-up buttons: plain link shows until the widget loads, and if it never does */
 .gb-donate { display: inline-block; }
-.gb-donate givebutter-button { display: none; }
-.gb-ready .gb-donate givebutter-button { display: inline-block; }
+.gb-donate givebutter-widget { display: none; }
+.gb-ready .gb-donate givebutter-widget { display: inline-block; }
 .gb-ready .gb-donate .gb-link { display: none; }
 .gb-fallback .gb-donate .gb-link { display: inline-block; }
 
