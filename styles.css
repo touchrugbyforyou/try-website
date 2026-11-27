@@ -478,6 +478,9 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
 }
 .faq details[open] summary::after { transform: rotate(45deg); }
 .faq details p { margin: 0 0 1.25rem; color: var(--muted); }
+.faq details ul { margin: -.5rem 0 1.25rem; padding-left: 1.25rem; color: var(--muted); }
+.faq details li { margin-bottom: .35rem; }
+.faq details strong { color: var(--ink); }
 
 /* Footer */
 .site-footer {
