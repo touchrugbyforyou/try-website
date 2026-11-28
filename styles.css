@@ -482,6 +482,25 @@ button.btn { font: inherit; font-weight: 600; cursor: pointer; }
 .faq details li { margin-bottom: .35rem; }
 .faq details strong { color: var(--ink); }
 
+/* Updates (blog) */
+.post-list { list-style: none; margin: 0 0 1.25rem; padding: 0; border-top: 2px solid var(--pitch); max-width: 44rem; }
+.post-list li { padding: 1.25rem 0; border-bottom: 1px solid #CCD3C8; }
+.post-list time { font-size: .95rem; color: var(--muted); }
+.post-list h2, .post-list h3 { font-family: var(--display); font-weight: 700; font-size: 1.5rem; line-height: 1.2; margin: .2rem 0 .4rem; }
+.post-list h2 a, .post-list h3 a { color: var(--pitch); text-decoration: none; }
+.post-list h2 a:hover, .post-list h3 a:hover { text-decoration: underline; }
+.post-list p { margin: 0; color: var(--muted); }
+.post-wrap { max-width: 44rem; }
+.post h1 { font-family: var(--display); font-weight: 800; letter-spacing: -.02em; font-size: clamp(2.25rem, 5vw, 3.5rem); line-height: 1; color: var(--pitch); margin: 0 0 1.5rem; }
+.post-meta { font-size: .95rem; color: var(--muted); margin: 0 0 .75rem; }
+.lede-dark { font-size: 1.2rem; color: var(--muted); margin: 0 0 2rem; }
+.post-body h2 { font-family: var(--display); font-weight: 700; font-size: 1.75rem; line-height: 1.15; color: var(--pitch); margin: 2.25rem 0 .75rem; }
+.post-body p, .post-body ul { margin: 0 0 1.1rem; }
+.post-body li { margin-bottom: .5rem; }
+.post-cta { margin-top: 2.5rem; }
+.footer-link { color: var(--chalk); }
+.footer-link:hover { color: var(--bib); }
+
 /* Footer */
 .site-footer {
   background: var(--ink);
