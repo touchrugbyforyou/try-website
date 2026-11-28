@@ -26,6 +26,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE = "https://touchrugbyforyou.org"
 GIVEBUTTER = "https://givebutter.com/touch-rugby-for-you"
 
+# Donation pop-up and Givebutter library, copied from index.html so every page opens the same form.
+GB_SCRIPT = '  <script async src="https://widgets.givebutter.com/latest.umd.cjs?acct=2XNsycmCePTp1ATm&amp;p=other"></script>\n'
+DONATE_DIALOG = '  <dialog id="donate-dialog" class="donate-dialog" aria-labelledby="donate-title">\n    <button type="button" class="game-close" data-close-donate aria-label="Close">&times;</button>\n    <h2 id="donate-title">Support TRY</h2>\n    <p class="donate-intro">Every gift goes into the scholarship fund. TRY is a 501(c)(3), <span style="white-space:nowrap">EIN 43-2815674</span>.</p>\n    <div class="donate-form"><givebutter-widget id="j2Oxr8"></givebutter-widget></div>\n    <p class="donate-other"><strong>Prefer to give by check or bank transfer (ACH)?</strong><br>Email <a href="mailto:contact@touchrugbyforyou.org?subject=Donating%20by%20check%20or%20ACH" data-goatcounter-click="donate-check-ach" data-goatcounter-title="Asked about check/ACH donation">contact@touchrugbyforyou.org</a> and we\'ll send you the details.</p>\n    <p class="donate-alt">Form not loading? <a href="https://givebutter.com/touch-rugby-for-you" rel="noopener" data-goatcounter-click="donate-dialog-link" data-goatcounter-title="Donate dialog fallback link">Donate on Givebutter</a>.</p>\n  </dialog>\n  <script>\n    // Donate buttons open the donation pop-up; without dialog support they go to the Givebutter page.\n    (function () {\n      var dlg = document.getElementById(\'donate-dialog\');\n      if (!dlg || typeof dlg.showModal !== \'function\') return;\n      document.addEventListener(\'click\', function (e) {\n        var link = e.target.closest && e.target.closest(\'[data-gb-donate]\');\n        if (link) { e.preventDefault(); dlg.showModal(); }\n      });\n      dlg.querySelector(\'[data-close-donate]\').addEventListener(\'click\', function () { dlg.close(); });\n      dlg.addEventListener(\'click\', function (e) { if (e.target === dlg) dlg.close(); });\n    })();\n  </script>\n'
+
 
 def read_posts():
     posts = []
@@ -83,7 +87,7 @@ def page(title, description, canonical, body, og_type="website"):
   <link rel="preload" href="/fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/figtree.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css?v={css_version()}">
-</head>
+{GB_SCRIPT}</head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site-header">
@@ -108,18 +112,26 @@ def page(title, description, canonical, body, og_type="website"):
   </main>
   <footer class="site-footer">
     <div class="wrap">
-      <p>Touch Rugby for You is a California nonprofit public benefit corporation and a 501(c)(3) tax-exempt organization. EIN 43-2815674.</p>
+      <p>Touch Rugby for You is a nonprofit public benefit corporation and a 501(c)(3) tax-exempt organization. EIN 43-2815674.</p>
       <p><a class="footer-link" href="https://www.instagram.com/touchrugbyforyou/" rel="noopener">@touchrugbyforyou</a> &middot; <a class="footer-link" href="/feed.xml">RSS</a></p>
       <p>&copy; {datetime.date.today().year} Touch Rugby for You</p>
     </div>
   </footer>
-  <script data-goatcounter="https://touchrugbyforyou.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+{DONATE_DIALOG}  <script data-goatcounter="https://touchrugbyforyou.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>
 """
 
 
+def with_popup(content):
+    """Mark every Givebutter link (except the pop-up's own fallback) so it opens the donation pop-up."""
+    return re.sub(r'<a ((?:(?!data-gb-donate)[^>])*?)href="' + re.escape(GIVEBUTTER) + r'"(?![^>]*Donate dialog fallback)',
+                  r'<a \1href="' + GIVEBUTTER + r'" data-gb-donate', content)
+
+
 def write(rel, content):
+    if rel.endswith(".html"):
+        content = with_popup(content)
     path = os.path.join(ROOT, rel)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
